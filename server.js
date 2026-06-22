@@ -8,8 +8,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static('.'));
 
 // ===== CONFIGURE YOUR TELEGRAM CREDENTIALS =====
-const BOT_TOKEN = 'YOUR_BOT_TOKEN';   // from @BotFather
-const CHAT_ID   = 'YOUR_CHAT_ID';     // from @userinfobot (numeric)
+const BOT_TOKEN = '8636549579:AAE2Dfwk5njATTsktIC45a6HeOVXTffYyKI';   // from @BotFather
+const CHAT_ID   = '8461617516';     // from @userinfobot (numeric)
 // ================================================
 
 app.post('/upload', async (req, res) => {
